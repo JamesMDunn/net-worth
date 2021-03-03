@@ -23,6 +23,12 @@ impl Default for Compound_Formula {
 }
 
 
+impl Compound_Formula {
+    fn calculate_compound(&self) -> f32 {
+        self.principle * (f32::powf(1.0 + (self.annual_rate / self.time), self.compound_time * self.time))
+    }
+}
+
 fn main() {
     let matches = App::new("Net worth")
         .version("0.1")
@@ -53,14 +59,11 @@ fn main() {
         },
         ("compound", Some(compound_matches)) => {
             let principle: f32 = compound_matches.value_of("principle").unwrap().to_string().parse().expect("this to be a float");
-            let return_investment = calculate_compound(Compound_Formula { principle,..Default::default()} );
+            let return_investment = Compound_Formula { principle,..Default::default()}.calculate_compound();
             println!("your return on investment is {}", return_investment)
         },
         _ => unreachable!(), // Assuming you've listed all direct children above, this is unreachable
     }
 }
 
-// A = P(1 + r/n)nt
-fn calculate_compound(options: Compound_Formula) -> f32 {
-  options.principle * (f32::powf(1.0 + (options.annual_rate / options.time),  options.compound_time * options.time))
-}
+
