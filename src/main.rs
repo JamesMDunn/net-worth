@@ -1,8 +1,10 @@
 extern crate clap;
-use std::ops::Sub;
+use std::{ops::Sub};
 
 use clap::{App, Arg, SubCommand};
+use num_format::{Locale, ToFormattedString};
 
+const NAN_ERROR: &str = "Expected a number";
 
 struct Compound_Formula {
     principle: f32,
@@ -22,10 +24,9 @@ impl Default for Compound_Formula {
     }
 }
 
-
 impl Compound_Formula {
     fn calculate_compound(&self) -> f32 {
-        self.principle * (f32::powf(1.0 + (self.annual_rate / self.time), self.compound_time * self.time))
+        self.principle * (f32::powf(1.0 + (self.annual_rate / self.compound_time), self.compound_time * self.time))
     }
 }
 
@@ -42,28 +43,43 @@ fn main() {
             ),
         )
         .subcommand(
-            SubCommand::with_name("compound").about("compount interest calculator").arg(
+            SubCommand::with_name("compound").about("Compound interest calculator").arg(
                 Arg::with_name("principle")
                 .help("the portfolio amount")
                 .required(true),
-            ),
+            )
+            .arg(Arg::with_name("annual_rate")
+                .help("expected annual rate")
+                .required(false),
+            )
+            .arg(Arg::with_name("time")
+                .help("years invested")
+                .required(false),
+            )
         )
         .get_matches();
 
     match matches.subcommand() {
         ("salary", Some(salary_matches)) => {
-            let income_int: i32 = salary_matches.value_of("income").unwrap().to_string().parse().expect("testing");
+            let income_int: i32 = salary_matches.value_of("income").unwrap().to_string().parse().expect(NAN_ERROR);
+
             println!("your weekly salary is {}", income_int / 52);
             println!("Your bi-weekly salary is {}", income_int / 26);
             println!("your monthly salary is {}", income_int / 12);
         },
         ("compound", Some(compound_matches)) => {
-            let principle: f32 = compound_matches.value_of("principle").unwrap().to_string().parse().expect("this to be a float");
-            let return_investment = Compound_Formula { principle,..Default::default()}.calculate_compound();
-            println!("your return on investment is {}", return_investment)
+            let mut formula = Compound_Formula { ..Default::default() };
+            let principle: f32 = compound_matches.value_of("principle").unwrap().to_string().parse().expect(NAN_ERROR);
+            if let Some(annual_rate) = compound_matches.value_of("annual_rate") {
+                formula.annual_rate = annual_rate.to_string().parse().expect(NAN_ERROR);
+            }
+            if let Some(time) = compound_matches.value_of("time") {
+                formula.time = time.to_string().parse().expect(NAN_ERROR);
+            }
+            formula.principle = principle;
+            let return_investment = formula.calculate_compound();
+            println!("your return on investment is {}", return_investment);
         },
         _ => unreachable!(), // Assuming you've listed all direct children above, this is unreachable
     }
 }
-
-
