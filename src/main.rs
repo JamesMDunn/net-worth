@@ -55,7 +55,19 @@ fn main() {
             .arg(Arg::with_name("time")
                 .help("years invested")
                 .required(false),
-            )
+            ),
+        ).subcommand(
+            SubCommand::with_name("average_share_price").about("Average share price").arg(
+                Arg::with_name("price")
+                .help("price of your shares when purchased")
+                .required(true)
+                .multiple(true)
+            ).arg(Arg::with_name("quanity")
+                .help("number of shares")
+                .required(true)
+                .multiple(true)
+                .last(true)
+            )     
         )
         .get_matches();
 
@@ -80,6 +92,24 @@ fn main() {
             let return_investment = formula.calculate_compound();
             println!("your return on investment is {}", return_investment);
         },
+        ("average_share_price", Some(average_price)) => {
+            let mut prices: Vec<&str> = average_price.values_of("price").unwrap().collect();
+            let mut quantities: Vec<&str> = average_price.values_of("quanity").unwrap().collect();
+            println!("testing {:?}", prices);
+            println!("testing quant {:?}", quantities);
+            if prices.len() != quantities.len() {
+                println!("Mismatch between shares and prices")
+            } else {
+                println!("got here");
+                // let mut total: f32 = 0.00;
+                let total = prices.iter().zip(quantities.iter()).map(|(&x, &j)| x.to_string().parse::<f32>().expect(NAN_ERROR) as f32 * j.to_string().parse::<f32>().expect(NAN_ERROR) as f32).collect::<Vec<f32>>();
+
+                println!("{:?}", total)
+            }
+        },
         _ => unreachable!(), // Assuming you've listed all direct children above, this is unreachable
     }
 }
+
+// let zipped = prices.iter().zip(quantities.iter());
+// println!("zipped {:?}", zipped.collect::<Vec<(&&str, &&str)>>())
