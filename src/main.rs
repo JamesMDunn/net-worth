@@ -1,21 +1,21 @@
 extern crate clap;
-use std::{ops::Sub};
+
+use core::f32;
 
 use clap::{App, Arg, SubCommand};
-use num_format::{Locale, ToFormattedString};
 
 const NAN_ERROR: &str = "Expected a number";
 
-struct Compound_Formula {
+struct CompoundFormula {
     principle: f32,
     compound_time: f32,
     annual_rate: f32,
     time: f32
 }
 
-impl Default for Compound_Formula {
+impl Default for CompoundFormula {
     fn default() -> Self {
-        Compound_Formula {
+        CompoundFormula {
             principle: 10000.00,
             compound_time: 1.0,
             annual_rate: 0.80,
@@ -24,7 +24,7 @@ impl Default for Compound_Formula {
     }
 }
 
-impl Compound_Formula {
+impl CompoundFormula {
     fn calculate_compound(&self) -> f32 {
         self.principle * (f32::powf(1.0 + (self.annual_rate / self.compound_time), self.compound_time * self.time))
     }
@@ -80,7 +80,7 @@ fn main() {
             println!("your monthly salary is {}", income_int / 12);
         },
         ("compound", Some(compound_matches)) => {
-            let mut formula = Compound_Formula { ..Default::default() };
+            let mut formula = CompoundFormula { ..Default::default() };
             let principle: f32 = compound_matches.value_of("principle").unwrap().to_string().parse().expect(NAN_ERROR);
             if let Some(annual_rate) = compound_matches.value_of("annual_rate") {
                 formula.annual_rate = annual_rate.to_string().parse().expect(NAN_ERROR);
@@ -93,18 +93,15 @@ fn main() {
             println!("your return on investment is {}", return_investment);
         },
         ("average_share_price", Some(average_price)) => {
-            let mut prices: Vec<&str> = average_price.values_of("price").unwrap().collect();
-            let mut quantities: Vec<&str> = average_price.values_of("quanity").unwrap().collect();
-            println!("testing {:?}", prices);
-            println!("testing quant {:?}", quantities);
+            let prices: Vec<&str> = average_price.values_of("price").unwrap().collect();
+            let quantities: Vec<&str> = average_price.values_of("quanity").unwrap().collect();
             if prices.len() != quantities.len() {
                 println!("Mismatch between shares and prices")
             } else {
-                println!("got here");
-                // let mut total: f32 = 0.00;
-                let total = prices.iter().zip(quantities.iter()).map(|(&x, &j)| x.to_string().parse::<f32>().expect(NAN_ERROR) as f32 * j.to_string().parse::<f32>().expect(NAN_ERROR) as f32).collect::<Vec<f32>>();
-
-                println!("{:?}", total)
+                let combined_totals: Vec<f32> = prices.iter().zip(quantities.iter()).map(|(&x, &j)| x.to_string().parse::<f32>().expect(NAN_ERROR) as f32 * j.to_string().parse::<f32>().expect(NAN_ERROR) as f32).collect::<Vec<f32>>();
+                let totals: f32 = combined_totals.iter().sum();
+                let quantities_sum: f32 = quantities.iter().map(|x| x.to_string().parse::<f32>().expect(NAN_ERROR)).sum();
+                println!("\nTotal amount of money spent: ${}\nBreak even average: ${:?}", totals, totals / quantities_sum )
             }
         },
         _ => unreachable!(), // Assuming you've listed all direct children above, this is unreachable
